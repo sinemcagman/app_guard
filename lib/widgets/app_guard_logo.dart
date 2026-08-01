@@ -11,6 +11,18 @@ class AppGuardLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = alert ? AppColors.alert : AppColors.cyan;
+    if (!alert) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size * .2),
+        child: Image.asset(
+          'assets/images/app_icon.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        ),
+      );
+    }
     return Container(
       width: size,
       height: size,

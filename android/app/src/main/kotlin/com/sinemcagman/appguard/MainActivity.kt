@@ -1,4 +1,4 @@
-package com.example.app_guard
+package com.sinemcagman.appguard
 
 import android.app.ActivityManager
 import android.content.Context
@@ -14,6 +14,7 @@ import java.util.Locale
 class MainActivity : FlutterFragmentActivity() {
     private val channelName = "app_guard/platform"
     private var channel: MethodChannel? = null
+    private var pinnedSessionRequested = false
     private var pinnedSessionStarted = false
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -33,7 +34,11 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (pinnedSessionStarted && currentLockTaskState() == ActivityManager.LOCK_TASK_MODE_NONE) {
+        val lockTaskState = currentLockTaskState()
+        if (pinnedSessionRequested && lockTaskState != ActivityManager.LOCK_TASK_MODE_NONE) {
+            pinnedSessionRequested = false
+            pinnedSessionStarted = true
+        } else if (pinnedSessionStarted && lockTaskState == ActivityManager.LOCK_TASK_MODE_NONE) {
             pinnedSessionStarted = false
             channel?.invokeMethod("unauthorizedExitDetected", null)
         }
@@ -90,11 +95,8 @@ class MainActivity : FlutterFragmentActivity() {
         try {
             startLockTask()
             pinnedSessionStarted = currentLockTaskState() != ActivityManager.LOCK_TASK_MODE_NONE
-            if (pinnedSessionStarted) {
-                result.success("LOCK_TASK_STARTED")
-            } else {
-                result.error("LOCK_TASK_FAILED", null, null)
-            }
+            pinnedSessionRequested = !pinnedSessionStarted
+            result.success(if (pinnedSessionStarted) "LOCK_TASK_STARTED" else "LOCK_TASK_REQUESTED")
         } catch (_: SecurityException) {
             result.error("PINNING_NOT_PERMITTED", null, null)
         } catch (_: IllegalArgumentException) {
@@ -105,6 +107,7 @@ class MainActivity : FlutterFragmentActivity() {
     private fun stopPinnedMode(result: MethodChannel.Result) {
         try {
             if (currentLockTaskState() != ActivityManager.LOCK_TASK_MODE_NONE) stopLockTask()
+            pinnedSessionRequested = false
             pinnedSessionStarted = false
             result.success(null)
         } catch (_: SecurityException) {
@@ -117,6 +120,12 @@ class MainActivity : FlutterFragmentActivity() {
             result.error("APP_NOT_FOUND", null, null)
             return
         }
+        if (currentLockTaskState() == ActivityManager.LOCK_TASK_MODE_NONE) {
+            result.error("PINNING_NOT_PERMITTED", null, null)
+            return
+        }
+        pinnedSessionRequested = false
+        pinnedSessionStarted = true
         val intent = packageManager.getLaunchIntentForPackage(targetPackage)
         if (intent == null) {
             result.error("APP_NOT_FOUND", null, null)
