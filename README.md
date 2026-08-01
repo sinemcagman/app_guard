@@ -9,9 +9,10 @@ AppGuard, Android cihazlarda seçilen uygulamalara erişimi ekran sabitleme, dö
 - Uygulama adıyla arama ve kategoriye göre filtreleme
 - Korunacak uygulamaları seçme
 - Android ekran sabitleme (lock task) oturumu
-- SHA-256 özetli dört haneli Ana PIN
-- Uygulama modu etkinleştirildikten sonra zorunlu çıkış PIN'i oluşturma
-- Etkin oturumda Ayarlar sekmesinden çıkış PIN'ini doğrulayarak değiştirme
+- SHA-256 özetli sayısal PIN, 3×3 desen veya metin parola seçimi
+- Ayarlar sekmesinden oturum durumundan bağımsız çıkış kilidi oluşturma
+- Uygulama modu etkinleştirildikten sonra zorunlu çıkış yöntemi seçimi
+- Mevcut yöntemi doğrulayarak çıkış kilidini değiştirme
 - Parmak izi veya yüz doğrulamasıyla kilit açma
 - Yetkisiz çıkış algılandığında tam ekran güvenlik katmanı
 - Tamamen merkezi Türkçe arayüz metinleri

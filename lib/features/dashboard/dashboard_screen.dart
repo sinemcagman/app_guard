@@ -8,7 +8,7 @@ import '../../services/security_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/app_guard_logo.dart';
 import '../lock/lock_screen.dart';
-import '../security/security_setup_sheet.dart';
+import '../security/credential_setup_flow.dart';
 import '../settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -95,28 +95,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     try {
-      final needsExitPin = !await widget.securityService.hasPin();
+      final needsExitCredential = !await widget.securityService.hasCredential();
       await widget.platformService.startPinnedMode();
       if (!mounted) return;
       setState(() {
         _pinnedMode = true;
-        if (needsExitPin) {
+        if (needsExitCredential) {
           _navigationIndex = 3;
         }
       });
-      if (needsExitPin) {
+      if (needsExitCredential) {
         _showMessage(AppStrings.activateThenSetPin);
-        final setup = await SecuritySetupSheet.show(
+        final saved = await CredentialSetupFlow.show(
           context,
+          securityService: widget.securityService,
           requiredForActivation: true,
         );
-        if (setup == null) {
+        if (!saved) {
           return;
         }
-        await widget.securityService.savePin(
-          setup.pin,
-          enableBiometrics: setup.enableBiometrics,
-        );
         if (mounted) {
           setState(() => _settingsRevision++);
         }
@@ -219,7 +216,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? SettingsScreen(
               key: ValueKey(_settingsRevision),
               securityService: widget.securityService,
-              pinnedModeActive: _pinnedMode,
             )
           : RefreshIndicator(
               onRefresh: _loadApplications,

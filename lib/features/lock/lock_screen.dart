@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../localization/app_strings.dart';
+import '../../models/security_credential_type.dart';
 import '../../services/app_failure.dart';
 import '../../services/security_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/app_guard_logo.dart';
+import '../../widgets/pattern_input.dart';
 import '../../widgets/pin_keypad.dart';
 
 class LockScreen extends StatefulWidget {
@@ -12,19 +14,48 @@ class LockScreen extends StatefulWidget {
     required this.securityService,
     required this.onUnlocked,
     super.key,
+    this.title,
+    this.description,
+    this.showBiometrics = true,
   });
 
   final SecurityService securityService;
   final Future<void> Function() onUnlocked;
+  final String? title;
+  final String? description;
+  final bool showBiometrics;
 
   @override
   State<LockScreen> createState() => _LockScreenState();
 }
 
 class _LockScreenState extends State<LockScreen> {
+  final _passwordController = TextEditingController();
+  SecurityCredentialType? _type;
   String _pin = '';
   String? _error;
   bool _checking = false;
+  bool _obscurePassword = true;
+  int _patternAttempt = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadType();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadType() async {
+    final type = await widget.securityService.credentialType();
+    if (mounted) {
+      setState(() => _type = type);
+    }
+  }
 
   void _addDigit(String digit) {
     if (_pin.length == 4 || _checking) return;
@@ -32,7 +63,9 @@ class _LockScreenState extends State<LockScreen> {
       _error = null;
       _pin += digit;
     });
-    if (_pin.length == 4) _verifyPin();
+    if (_pin.length == 4) {
+      _verify(_pin);
+    }
   }
 
   void _backspace() {
@@ -43,9 +76,21 @@ class _LockScreenState extends State<LockScreen> {
     });
   }
 
-  Future<void> _verifyPin() async {
-    setState(() => _checking = true);
-    final valid = await widget.securityService.verifyPin(_pin);
+  String _failureMessage() => switch (_type) {
+    SecurityCredentialType.pattern => AppStrings.incorrectPattern,
+    SecurityCredentialType.textPassword => AppStrings.incorrectPassword,
+    _ => AppStrings.incorrectPin,
+  };
+
+  Future<void> _verify(String credential) async {
+    if (_checking || credential.isEmpty) {
+      return;
+    }
+    setState(() {
+      _checking = true;
+      _error = null;
+    });
+    final valid = await widget.securityService.verifyCredential(credential);
     if (!mounted) return;
     if (valid) {
       await widget.onUnlocked();
@@ -53,7 +98,9 @@ class _LockScreenState extends State<LockScreen> {
       setState(() {
         _checking = false;
         _pin = '';
-        _error = AppStrings.incorrectPin;
+        _passwordController.clear();
+        _patternAttempt++;
+        _error = _failureMessage();
       });
     }
   }
@@ -68,8 +115,65 @@ class _LockScreenState extends State<LockScreen> {
     }
   }
 
+  Widget _credentialInput(bool compact) => switch (_type) {
+    SecurityCredentialType.pattern => PatternInput(
+      key: ValueKey(_patternAttempt),
+      size: compact ? 235 : 270,
+      enabled: !_checking,
+      onCompleted: (pattern) => _verify(pattern.join('-')),
+    ),
+    SecurityCredentialType.textPassword => ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 440),
+      child: Column(
+        children: [
+          TextField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            enabled: !_checking,
+            autofocus: true,
+            onSubmitted: _verify,
+            decoration: InputDecoration(
+              labelText: AppStrings.enterTextPassword,
+              prefixIcon: const Icon(Icons.password_outlined),
+              suffixIcon: IconButton(
+                tooltip: _obscurePassword
+                    ? AppStrings.showPassword
+                    : AppStrings.hidePassword,
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _checking
+                  ? null
+                  : () => _verify(_passwordController.text),
+              icon: const Icon(Icons.verified_user_outlined),
+              label: const Text(AppStrings.verify),
+            ),
+          ),
+        ],
+      ),
+    ),
+    SecurityCredentialType.numericPin => PinKeypad(
+      pinLength: _pin.length,
+      onDigit: _addDigit,
+      onBackspace: _backspace,
+      compact: compact,
+      showLetters: true,
+    ),
+    null => const CircularProgressIndicator(color: AppColors.cyan),
+  };
+
   @override
   Widget build(BuildContext context) {
+    final verificationOnly = widget.title != null;
     return Material(
       color: AppColors.surface.withValues(alpha: .98),
       child: SafeArea(
@@ -90,10 +194,13 @@ class _LockScreenState extends State<LockScreen> {
                   children: [
                     Column(
                       children: [
-                        AppGuardLogo(size: compact ? 74 : 92, alert: true),
+                        AppGuardLogo(
+                          size: compact ? 74 : 92,
+                          alert: !verificationOnly,
+                        ),
                         SizedBox(height: compact ? 16 : 24),
                         Text(
-                          AppStrings.unauthorizedExit,
+                          widget.title ?? AppStrings.unauthorizedExit,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: compact ? 25 : 29,
@@ -103,24 +210,29 @@ class _LockScreenState extends State<LockScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          AppStrings.authenticationRequired,
+                          widget.description ??
+                              AppStrings.authenticationRequired,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(color: AppColors.onSurfaceVariant),
                         ),
+                        if (_type != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            _type!.label,
+                            style: const TextStyle(
+                              color: AppColors.cyan,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(
                         vertical: compact ? 20 : 30,
                       ),
-                      child: PinKeypad(
-                        pinLength: _pin.length,
-                        onDigit: _addDigit,
-                        onBackspace: _backspace,
-                        compact: compact,
-                        showLetters: true,
-                      ),
+                      child: _credentialInput(compact),
                     ),
                     Column(
                       children: [
@@ -142,31 +254,32 @@ class _LockScreenState extends State<LockScreen> {
                               ),
                             ),
                           ),
-                        Semantics(
-                          button: true,
-                          label: AppStrings.tapToScan,
-                          child: InkWell(
-                            onTap: _authenticate,
-                            borderRadius: BorderRadius.circular(18),
-                            child: const Padding(
-                              padding: EdgeInsets.all(10),
-                              child: Column(
-                                children: [
-                                  AppGuardLogo(size: 62),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    AppStrings.tapToScan,
-                                    style: TextStyle(
-                                      color: AppColors.cyan,
-                                      letterSpacing: 1.6,
-                                      fontWeight: FontWeight.w600,
+                        if (widget.showBiometrics)
+                          Semantics(
+                            button: true,
+                            label: AppStrings.tapToScan,
+                            child: InkWell(
+                              onTap: _authenticate,
+                              borderRadius: BorderRadius.circular(18),
+                              child: const Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Column(
+                                  children: [
+                                    AppGuardLogo(size: 62),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      AppStrings.tapToScan,
+                                      style: TextStyle(
+                                        color: AppColors.cyan,
+                                        letterSpacing: 1.6,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
                         const SizedBox(height: 12),
                         Text(
                           AppStrings.securityLayer,

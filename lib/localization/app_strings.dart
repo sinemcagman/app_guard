@@ -19,6 +19,41 @@ abstract final class AppStrings {
   static const securitySettingsDescription =
       'Sabitlenmiş oturum ve çıkış doğrulama seçeneklerini yönetin.';
   static const exitPin = 'Çıkış PIN\'i';
+  static const exitLock = 'Çıkış Kilidi';
+  static const exitLockDescription =
+      'Sabitlenmiş modu bitirmek için kullanılacak doğrulama yöntemi.';
+  static const chooseExitMethod = 'Çıkış Yöntemi Seçin';
+  static const chooseExitMethodDescription =
+      'Sayısal PIN, desen veya metin parola seçeneklerinden birini kullanın.';
+  static const numericPin = 'Sayısal PIN';
+  static const numericPinDescription = '4 haneli sayısal güvenlik kodu';
+  static const patternLock = 'Desen';
+  static const patternLockDescription = '3×3 noktalar üzerinde güvenlik deseni';
+  static const textPassword = 'Metin Parola';
+  static const textPasswordDescription =
+      'Harf, sayı ve simgelerden oluşan parola';
+  static const createPattern = 'Çıkış Deseni Oluşturun';
+  static const confirmPattern = 'Deseni Doğrulayın';
+  static const drawPattern = 'En az 4 noktayı birleştirerek desen çizin.';
+  static const drawPatternAgain = 'Aynı deseni yeniden çizin.';
+  static const patternsDoNotMatch = 'Desenler eşleşmiyor';
+  static const patternTooShort = 'Desen en az 4 noktadan oluşmalıdır.';
+  static const createTextPassword = 'Çıkış Parolası Oluşturun';
+  static const textPasswordHint = 'Parolanızı girin';
+  static const confirmTextPasswordHint = 'Parolanızı yeniden girin';
+  static const passwordsDoNotMatch = 'Parolalar eşleşmiyor';
+  static const passwordTooShort = 'Parola en az 4 karakter olmalıdır.';
+  static const showPassword = 'Parolayı göster';
+  static const hidePassword = 'Parolayı gizle';
+  static const saveExitMethod = 'Çıkış Yöntemini Kaydet';
+  static const exitMethodSaved = 'Çıkış yöntemi kaydedildi.';
+  static const currentExitMethod = 'Geçerli yöntem';
+  static const verifyExitMethod = 'Çıkış Kilidini Doğrulayın';
+  static const verifyExitMethodDescription =
+      'Güvenlik ayarını değiştirmek için mevcut yönteminizi doğrulayın.';
+  static const enterTextPassword = 'Metin parolanızı girin';
+  static const verify = 'Doğrula';
+  static const clearPattern = 'Deseni Temizle';
   static const exitPinDescription =
       'Sabitlenmiş modu bitirmek için istenecek 4 haneli PIN.';
   static const exitPinSet = 'Çıkış PIN\'i ayarlı';
@@ -33,7 +68,7 @@ abstract final class AppStrings {
   static const pinRequiredForActivation =
       'Çıkış PIN\'i, uygulama modu etkinleştirildikten sonra belirlenir.';
   static const activateThenSetPin =
-      'Uygulama modu etkinleştirildi. Çıkış için kullanacağınız PIN\'i belirleyin.';
+      'Uygulama modu etkinleştirildi. Çıkış için kullanacağınız yöntemi belirleyin.';
   static const activateToManagePin =
       'Çıkış PIN\'ini yönetmek için önce uygulama modunu etkinleştirin.';
   static const exitPinProtectsSession =
@@ -63,14 +98,18 @@ abstract final class AppStrings {
   static const cancelAndReturn = 'İptal Et ve Ana Ekrana Dön';
   static const unauthorizedExit = 'Yetkisiz Çıkış Algılandı';
   static const authenticationRequired =
-      'Tam erişimi geri yüklemek için Ana PIN\'inizi girin veya biyometrik doğrulamayı kullanın.';
+      'Tam erişimi geri yüklemek için çıkış kilidinizi veya biyometrik doğrulamayı kullanın.';
   static const tapToScan = 'Taramak İçin Dokun';
   static const securityLayer = 'GÜVENLİK KATMANI';
   static const incorrectPin = 'PIN hatalı';
+  static const incorrectPattern = 'Desen hatalı';
+  static const incorrectPassword = 'Parola hatalı';
   static const pinsDoNotMatch = 'PIN\'ler eşleşmiyor';
   static const tryAgain = 'Tekrar Dene';
   static const cancel = 'İptal';
   static const save = 'Kaydet';
+  static const select = 'Seç';
+  static const change = 'Değiştir';
   static const refresh = 'Yenile';
   static const deleteDigit = 'Son haneyi sil';
   static const pinDigit = 'PIN hanesi';
