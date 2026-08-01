@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AppGuard | Security Lock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb3ae",
+                        "on-primary-fixed": "#002022",
+                        "on-tertiary-container": "#bb1824",
+                        "primary": "#dbfcff",
+                        "inverse-on-surface": "#2d3137",
+                        "surface-container-high": "#262a31",
+                        "on-surface-variant": "#b9cacb",
+                        "on-background": "#dfe2eb",
+                        "surface-container-highest": "#31353c",
+                        "on-secondary-fixed-variant": "#42474f",
+                        "on-tertiary-fixed-variant": "#930014",
+                        "inverse-primary": "#006970",
+                        "surface-tint": "#00dbe9",
+                        "surface-container-low": "#181c22",
+                        "primary-fixed": "#7df4ff",
+                        "secondary-fixed": "#dee2ec",
+                        "surface": "#10141a",
+                        "on-secondary-fixed": "#171c23",
+                        "outline-variant": "#3b494b",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#00dbe9",
+                        "surface-bright": "#353940",
+                        "on-tertiary-fixed": "#410004",
+                        "on-tertiary": "#68000b",
+                        "on-primary-fixed-variant": "#004f54",
+                        "outline": "#849495",
+                        "tertiary": "#fff3f2",
+                        "tertiary-fixed": "#ffdad7",
+                        "primary-container": "#00f0ff",
+                        "error": "#ffb4ab",
+                        "surface-container": "#1c2026",
+                        "surface-dim": "#10141a",
+                        "background": "#10141a",
+                        "on-primary": "#00363a",
+                        "secondary-fixed-dim": "#c2c7d0",
+                        "on-secondary-container": "#b1b5bf",
+                        "on-primary-container": "#006970",
+                        "secondary": "#c2c7d0",
+                        "on-error-container": "#ffdad6",
+                        "inverse-surface": "#dfe2eb",
+                        "secondary-container": "#42474f",
+                        "on-secondary": "#2c3138",
+                        "surface-container-lowest": "#0a0e14",
+                        "on-surface": "#dfe2eb",
+                        "on-error": "#690005",
+                        "tertiary-container": "#ffceca",
+                        "surface-variant": "#31353c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "gutter-mobile": "12px",
+                        "lg": "24px",
+                        "xs": "8px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "sm": "12px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Geist"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-overlay {
+            backdrop-filter: blur(24px);
+            background: linear-gradient(180deg, rgba(16, 20, 26, 0.85) 0%, rgba(16, 20, 26, 0.95) 100%);
+        }
+        .pin-dot {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pin-dot.filled {
+            background-color: #00dbe9;
+            box-shadow: 0 0 12px rgba(0, 219, 233, 0.6);
+            transform: scale(1.2);
+        }
+        .key-active:active {
+            transform: scale(0.92);
+            background-color: rgba(0, 219, 233, 0.1);
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(187, 24, 36, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(187, 24, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(187, 24, 36, 0); }
+        }
+        .alert-pulse {
+            animation: pulse-red 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen overflow-hidden flex flex-col items-center">
+<!-- Mock Background Content (Blurred) -->
+<div class="fixed inset-0 z-0 grid grid-cols-2 gap-4 p-margin-mobile">
+<div class="bg-surface-container h-40 rounded-xl border border-outline-variant p-4 flex flex-col justify-end">
+<div class="w-12 h-12 bg-primary/20 rounded-lg mb-2"></div>
+<div class="h-4 w-24 bg-outline-variant rounded"></div>
+</div>
+<div class="bg-surface-container h-40 rounded-xl border border-outline-variant p-4 flex flex-col justify-end">
+<div class="w-12 h-12 bg-primary/20 rounded-lg mb-2"></div>
+<div class="h-4 w-20 bg-outline-variant rounded"></div>
+</div>
+<div class="bg-surface-container h-40 rounded-xl border border-outline-variant p-4 flex flex-col justify-end">
+<div class="w-12 h-12 bg-primary/20 rounded-lg mb-2"></div>
+<div class="h-4 w-28 bg-outline-variant rounded"></div>
+</div>
+<div class="bg-surface-container h-40 rounded-xl border border-outline-variant p-4 flex flex-col justify-end">
+<div class="w-12 h-12 bg-primary/20 rounded-lg mb-2"></div>
+<div class="h-4 w-16 bg-outline-variant rounded"></div>
+</div>
+</div>
+<!-- MAIN LOCK OVERLAY -->
+<div class="fixed inset-0 z-50 glass-overlay flex flex-col items-center justify-between px-margin-mobile py-xl">
+<!-- Header Info -->
+<div class="w-full flex flex-col items-center text-center mt-xl">
+<div class="w-24 h-24 rounded-full bg-on-tertiary-container/10 flex items-center justify-center mb-md border border-on-tertiary-container/30 alert-pulse">
+<span class="material-symbols-outlined text-[48px] text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-xs">Unauthorized Exit Detected</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[280px]">
+                Enter your Master PIN or Scan Fingerprint to restore full access to your device.
+            </p>
+</div>
+<!-- PIN Dots -->
+<div class="flex space-x-6 my-lg" id="pin-display">
+<div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-outline"></div>
+<div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-outline"></div>
+<div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-outline"></div>
+<div class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-outline"></div>
+</div>
+<!-- Keypad -->
+<div class="grid grid-cols-3 gap-y-4 gap-x-8 w-full max-w-[320px] mb-xl">
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('1')">
+<span class="font-headline-md text-headline-md">1</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('2')">
+<span class="font-headline-md text-headline-md">2</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">ABC</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('3')">
+<span class="font-headline-md text-headline-md">3</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">DEF</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('4')">
+<span class="font-headline-md text-headline-md">4</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">GHI</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('5')">
+<span class="font-headline-md text-headline-md">5</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">JKL</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('6')">
+<span class="font-headline-md text-headline-md">6</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">MNO</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('7')">
+<span class="font-headline-md text-headline-md">7</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">PQRS</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('8')">
+<span class="font-headline-md text-headline-md">8</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">TUV</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex flex-col items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('9')">
+<span class="font-headline-md text-headline-md">9</span>
+<span class="text-[10px] text-on-surface-variant tracking-widest font-label-sm">WXYZ</span>
+</button>
+<div class="w-20 h-20"></div>
+<button class="key-active w-20 h-20 rounded-full flex items-center justify-center border border-outline-variant bg-surface-container-low transition-all" onclick="pressKey('0')">
+<span class="font-headline-md text-headline-md">0</span>
+</button>
+<button class="key-active w-20 h-20 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim transition-colors" onclick="backspace()">
+<span class="material-symbols-outlined text-[28px]">backspace</span>
+</button>
+</div>
+<!-- Biometric Bottom Action -->
+<button class="flex flex-col items-center group mb-4 active:scale-95 transition-transform">
+<div class="w-16 h-16 rounded-full border border-primary-fixed-dim/30 bg-primary-fixed-dim/5 flex items-center justify-center mb-2 group-hover:bg-primary-fixed-dim/10 transition-all">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[32px]">fingerprint</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary-fixed-dim tracking-[0.1em]">TAP TO SCAN</span>
+</button>
+<div class="text-[10px] font-label-sm text-outline opacity-40 uppercase tracking-widest">
+            Security Layer v4.2.0-secure
+        </div>
+</div>
+<!-- Emergency Link -->
+<div class="fixed bottom-margin-mobile z-50 w-full text-center hidden">
+<a class="font-label-sm text-label-sm text-on-tertiary-container/80 underline decoration-on-tertiary-container/30" href="#">Emergency Exit</a>
+</div>
+<script>
+        let pin = "";
+        const dots = document.querySelectorAll('.pin-dot');
+
+        function pressKey(num) {
+            if (pin.length < 4) {
+                pin += num;
+                updateDisplay();
+                
+                // Trigger tactile feedback
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(20);
+                }
+
+                if (pin.length === 4) {
+                    validatePin();
+                }
+            }
+        }
+
+        function backspace() {
+            if (pin.length > 0) {
+                pin = pin.slice(0, -1);
+                updateDisplay();
+            }
+        }
+
+        function updateDisplay() {
+            dots.forEach((dot, index) => {
+                if (index < pin.length) {
+                    dot.classList.add('filled', 'bg-primary-fixed-dim', 'border-primary-fixed-dim');
+                    dot.classList.remove('border-outline');
+                } else {
+                    dot.classList.remove('filled', 'bg-primary-fixed-dim', 'border-primary-fixed-dim');
+                    dot.classList.add('border-outline');
+                }
+            });
+        }
+
+        function validatePin() {
+            // Shake animation on error simulation
+            const pinDisplay = document.getElementById('pin-display');
+            pinDisplay.classList.add('animate-shake');
+            
+            setTimeout(() => {
+                // For demo, just clear after delay
+                pin = "";
+                updateDisplay();
+            }, 800);
+        }
+
+        // Add shake keyframe style dynamically
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-8px); }
+                75% { transform: translateX(8px); }
+            }
+            .animate-shake {
+                animation: shake 0.2s ease-in-out 0s 2;
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    </script>
+</body></html>
