@@ -15,6 +15,27 @@ abstract final class AppStrings {
   static const vault = 'Kasa';
   static const history = 'Geçmiş';
   static const settings = 'Ayarlar';
+  static const securitySettings = 'Güvenlik Ayarları';
+  static const securitySettingsDescription =
+      'Sabitlenmiş oturum ve çıkış doğrulama seçeneklerini yönetin.';
+  static const exitPin = 'Çıkış PIN\'i';
+  static const exitPinDescription =
+      'Sabitlenmiş modu bitirmek için istenecek 4 haneli PIN.';
+  static const exitPinSet = 'Çıkış PIN\'i ayarlı';
+  static const exitPinNotSet = 'Çıkış PIN\'i henüz ayarlanmadı';
+  static const setExitPin = 'Çıkış PIN\'i Belirle';
+  static const changeExitPin = 'Çıkış PIN\'ini Değiştir';
+  static const currentExitPin = 'Mevcut Çıkış PIN\'ini Girin';
+  static const currentExitPinDescription =
+      'Güvenlik ayarını değiştirmek için mevcut PIN\'inizi doğrulayın.';
+  static const exitPinSaved = 'Çıkış PIN\'i kaydedildi.';
+  static const pinRequiredForActivation =
+      'Sabitlenmiş mod etkinleştirilmeden önce çıkış PIN\'i belirlenmelidir.';
+  static const biometricUnlock = 'Biyometrik Kilit Açma';
+  static const enabled = 'Etkin';
+  static const disabled = 'Devre Dışı';
+  static const configured = 'Ayarlı';
+  static const notConfigured = 'Ayarlanmadı';
   static const privateVault = 'Özel Kasa';
   static const secureStorage = 'Güvenli Depolama';
   static const launchPinnedMode = 'Sabitlenmiş Modda Başlat';

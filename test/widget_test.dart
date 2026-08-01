@@ -108,4 +108,41 @@ void main() {
 
     expect(unlocked, isTrue);
   });
+
+  testWidgets('Ayarlar sekmesi çıkış PIN\'i belirleme akışını açar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const AppGuardApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.widgetWithText(NavigationDestination, AppStrings.settings),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.securitySettings), findsOneWidget);
+    expect(find.text(AppStrings.notConfigured), findsOneWidget);
+    await tester.tap(find.text(AppStrings.setExitPin));
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.setSecurityMethod), findsOneWidget);
+  });
+
+  testWidgets('ayarlı çıkış PIN\'i değiştirilmeden önce doğrulanır', (
+    tester,
+  ) async {
+    await SecurityService().savePin('1234', enableBiometrics: false);
+    await tester.pumpWidget(const AppGuardApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.widgetWithText(NavigationDestination, AppStrings.settings),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppStrings.changeExitPin));
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.currentExitPin), findsOneWidget);
+    expect(find.text(AppStrings.currentExitPinDescription), findsOneWidget);
+  });
 }

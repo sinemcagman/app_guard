@@ -9,6 +9,7 @@ import '../../theme/app_colors.dart';
 import '../../widgets/app_guard_logo.dart';
 import '../lock/lock_screen.dart';
 import '../security/security_setup_sheet.dart';
+import '../settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
@@ -31,6 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   AppCategory _category = AppCategory.all;
   bool _loading = true;
   bool _pinnedMode = false;
+  int _navigationIndex = 0;
 
   @override
   void initState() {
@@ -198,167 +200,182 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadApplications,
-        color: AppColors.cyan,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _searchController,
-                      onChanged: (_) => setState(() {}),
-                      textInputAction: TextInputAction.search,
-                      decoration: const InputDecoration(
-                        hintText: AppStrings.searchApps,
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppColors.onSurfaceVariant,
-                        ),
+      body: _navigationIndex == 3
+          ? SettingsScreen(securityService: widget.securityService)
+          : RefreshIndicator(
+              onRefresh: _loadApplications,
+              color: AppColors.cyan,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (_) => setState(() {}),
+                            textInputAction: TextInputAction.search,
+                            decoration: const InputDecoration(
+                              hintText: AppStrings.searchApps,
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            height: 42,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: AppCategory.values.length - 1,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: 8),
+                              itemBuilder: (context, index) {
+                                final category = AppCategory.values[index];
+                                final selected = category == _category;
+                                return ChoiceChip(
+                                  selected: selected,
+                                  label: Text(category.label),
+                                  onSelected: (_) =>
+                                      setState(() => _category = category),
+                                  selectedColor: AppColors.cyanBright,
+                                  backgroundColor: AppColors.surfaceHigh,
+                                  side: BorderSide.none,
+                                  labelStyle: TextStyle(
+                                    color: selected
+                                        ? AppColors.cyanDark
+                                        : AppColors.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          if (_selectedPackages.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              AppStrings.selectedAppCount(
+                                _selectedPackages.length,
+                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(color: AppColors.cyan),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      height: 42,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: AppCategory.values.length - 1,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  ),
+                  if (_loading)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Semantics(
+                          label: AppStrings.loadingApplications,
+                          child: const CircularProgressIndicator(
+                            color: AppColors.cyan,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (filteredApplications.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _EmptyState(
+                        message: _applications.isEmpty
+                            ? AppStrings.noApplications
+                            : AppStrings.noMatchingApplications,
+                        onReload: _loadApplications,
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 130),
+                      sliver: SliverList.separated(
+                        itemCount: filteredApplications.length + 1,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final category = AppCategory.values[index];
-                          final selected = category == _category;
-                          return ChoiceChip(
+                          if (index == filteredApplications.length) {
+                            return const _VaultCard();
+                          }
+                          final application = filteredApplications[index];
+                          final selected = _selectedPackages.contains(
+                            application.packageName,
+                          );
+                          return _ApplicationCard(
+                            application: application,
                             selected: selected,
-                            label: Text(category.label),
-                            onSelected: (_) =>
-                                setState(() => _category = category),
-                            selectedColor: AppColors.cyanBright,
-                            backgroundColor: AppColors.surfaceHigh,
-                            side: BorderSide.none,
-                            labelStyle: TextStyle(
-                              color: selected
-                                  ? AppColors.cyanDark
-                                  : AppColors.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            enabled: !_pinnedMode || selected,
+                            onTap: () => _openApp(application),
+                            onChanged: _pinnedMode
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      if (value) {
+                                        _selectedPackages.add(
+                                          application.packageName,
+                                        );
+                                      } else {
+                                        _selectedPackages.remove(
+                                          application.packageName,
+                                        );
+                                      }
+                                    });
+                                  },
                           );
                         },
                       ),
                     ),
-                    if (_selectedPackages.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        AppStrings.selectedAppCount(_selectedPackages.length),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.labelSmall?.copyWith(color: AppColors.cyan),
-                      ),
-                    ],
-                  ],
-                ),
+                ],
               ),
             ),
-            if (_loading)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Semantics(
-                    label: AppStrings.loadingApplications,
-                    child: const CircularProgressIndicator(
-                      color: AppColors.cyan,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: _navigationIndex == 0
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: FilledButton.icon(
+                  onPressed: _togglePinnedMode,
+                  icon: Icon(
+                    _pinnedMode ? Icons.lock_open : Icons.shield_outlined,
+                  ),
+                  label: Text(
+                    _pinnedMode
+                        ? AppStrings.stopPinnedMode
+                        : AppStrings.launchPinnedMode,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _pinnedMode
+                        ? AppColors.alertDark
+                        : AppColors.cyanBright,
+                    foregroundColor: _pinnedMode
+                        ? AppColors.onSurface
+                        : AppColors.cyanDark,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
-              )
-            else if (filteredApplications.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyState(
-                  message: _applications.isEmpty
-                      ? AppStrings.noApplications
-                      : AppStrings.noMatchingApplications,
-                  onReload: _loadApplications,
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 130),
-                sliver: SliverList.separated(
-                  itemCount: filteredApplications.length + 1,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    if (index == filteredApplications.length) {
-                      return const _VaultCard();
-                    }
-                    final application = filteredApplications[index];
-                    final selected = _selectedPackages.contains(
-                      application.packageName,
-                    );
-                    return _ApplicationCard(
-                      application: application,
-                      selected: selected,
-                      enabled: !_pinnedMode || selected,
-                      onTap: () => _openApp(application),
-                      onChanged: _pinnedMode
-                          ? null
-                          : (value) {
-                              setState(() {
-                                if (value) {
-                                  _selectedPackages.add(
-                                    application.packageName,
-                                  );
-                                } else {
-                                  _selectedPackages.remove(
-                                    application.packageName,
-                                  );
-                                }
-                              });
-                            },
-                    );
-                  },
-                ),
               ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: SizedBox(
-          width: double.infinity,
-          height: 60,
-          child: FilledButton.icon(
-            onPressed: _togglePinnedMode,
-            icon: Icon(_pinnedMode ? Icons.lock_open : Icons.shield_outlined),
-            label: Text(
-              _pinnedMode
-                  ? AppStrings.stopPinnedMode
-                  : AppStrings.launchPinnedMode,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: _pinnedMode
-                  ? AppColors.alertDark
-                  : AppColors.cyanBright,
-              foregroundColor: _pinnedMode
-                  ? AppColors.onSurface
-                  : AppColors.cyanDark,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-      ),
+            )
+          : null,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
+        selectedIndex: _navigationIndex,
         onDestinationSelected: (index) {
-          if (index != 0) _showMessage(AppStrings.comingSoon);
+          if (index == 0 || index == 3) {
+            setState(() => _navigationIndex = index);
+          } else {
+            _showMessage(AppStrings.comingSoon);
+          }
         },
         backgroundColor: AppColors.surfaceLowest,
         indicatorColor: AppColors.cyan.withValues(alpha: .22),
