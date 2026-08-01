@@ -29,8 +29,15 @@ abstract final class AppStrings {
   static const currentExitPinDescription =
       'Güvenlik ayarını değiştirmek için mevcut PIN\'inizi doğrulayın.';
   static const exitPinSaved = 'Çıkış PIN\'i kaydedildi.';
+  static const saveExitPin = 'Çıkış PIN\'ini Kaydet';
   static const pinRequiredForActivation =
-      'Sabitlenmiş mod etkinleştirilmeden önce çıkış PIN\'i belirlenmelidir.';
+      'Çıkış PIN\'i, uygulama modu etkinleştirildikten sonra belirlenir.';
+  static const activateThenSetPin =
+      'Uygulama modu etkinleştirildi. Çıkış için kullanacağınız PIN\'i belirleyin.';
+  static const activateToManagePin =
+      'Çıkış PIN\'ini yönetmek için önce uygulama modunu etkinleştirin.';
+  static const exitPinProtectsSession =
+      'Etkin uygulama modundan çıkarken bu PIN veya biyometrik doğrulama istenir.';
   static const biometricUnlock = 'Biyometrik Kilit Açma';
   static const enabled = 'Etkin';
   static const disabled = 'Devre Dışı';

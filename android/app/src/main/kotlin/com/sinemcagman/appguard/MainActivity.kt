@@ -4,10 +4,15 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
+import android.util.Base64
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
 import java.text.Collator
 import java.util.Locale
 
@@ -65,11 +70,29 @@ class MainActivity : FlutterFragmentActivity() {
                 mapOf(
                     "name" to info.loadLabel(packageManager).toString(),
                     "packageName" to appPackage,
-                    "category" to categoryFor(appPackage)
+                    "category" to categoryFor(appPackage),
+                    "icon" to encodeIcon(info.loadIcon(packageManager))
                 )
             }
             .sortedWith { first, second -> collator.compare(first["name"], second["name"]) }
             .toList()
+    }
+
+    private fun encodeIcon(drawable: android.graphics.drawable.Drawable): String {
+        val size = 96
+        val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            Bitmap.createScaledBitmap(drawable.bitmap, size, size, true)
+        } else {
+            Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).also { target ->
+                val canvas = Canvas(target)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+            }
+        }
+        return ByteArrayOutputStream().use { output ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 90, output)
+            Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP)
+        }
     }
 
     private fun categoryFor(packageName: String): String {

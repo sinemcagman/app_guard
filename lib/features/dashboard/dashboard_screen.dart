@@ -18,7 +18,7 @@ class DashboardScreen extends StatefulWidget {
     super.key,
   });
 
-  final PlatformAppService platformService;
+  final PlatformAppGateway platformService;
   final SecurityService securityService;
 
   @override
@@ -33,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _loading = true;
   bool _pinnedMode = false;
   int _navigationIndex = 0;
+  int _settingsRevision = 0;
 
   @override
   void initState() {
@@ -93,20 +94,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    if (!await widget.securityService.hasPin()) {
-      if (!mounted) return;
-      final setup = await SecuritySetupSheet.show(context);
-      if (setup == null) return;
-      await widget.securityService.savePin(
-        setup.pin,
-        enableBiometrics: setup.enableBiometrics,
-      );
-    }
-
     try {
+      final needsExitPin = !await widget.securityService.hasPin();
       await widget.platformService.startPinnedMode();
       if (!mounted) return;
-      setState(() => _pinnedMode = true);
+      setState(() {
+        _pinnedMode = true;
+        if (needsExitPin) {
+          _navigationIndex = 3;
+        }
+      });
+      if (needsExitPin) {
+        _showMessage(AppStrings.activateThenSetPin);
+        final setup = await SecuritySetupSheet.show(
+          context,
+          requiredForActivation: true,
+        );
+        if (setup == null) {
+          return;
+        }
+        await widget.securityService.savePin(
+          setup.pin,
+          enableBiometrics: setup.enableBiometrics,
+        );
+        if (mounted) {
+          setState(() => _settingsRevision++);
+        }
+      }
+      if (!mounted) return;
       _showMessage(AppStrings.pinnedModeActive);
     } on AppFailure catch (failure) {
       if (mounted) _showMessage(failure.message);
@@ -201,7 +216,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: _navigationIndex == 3
-          ? SettingsScreen(securityService: widget.securityService)
+          ? SettingsScreen(
+              key: ValueKey(_settingsRevision),
+              securityService: widget.securityService,
+              pinnedModeActive: _pinnedMode,
+            )
           : RefreshIndicator(
               onRefresh: _loadApplications,
               color: AppColors.cyan,
@@ -447,11 +466,25 @@ class _ApplicationCard extends StatelessWidget {
                     color: application.iconColor.withValues(alpha: .16),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    application.icon,
-                    color: application.iconColor,
-                    size: 29,
-                  ),
+                  child: application.iconBytes == null
+                      ? Icon(
+                          application.icon,
+                          color: application.iconColor,
+                          size: 29,
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            application.iconBytes!,
+                            fit: BoxFit.cover,
+                            filterQuality: FilterQuality.medium,
+                            errorBuilder: (_, _, _) => Icon(
+                              application.icon,
+                              color: application.iconColor,
+                              size: 29,
+                            ),
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

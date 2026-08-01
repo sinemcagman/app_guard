@@ -7,9 +7,14 @@ import '../security/pin_verification_sheet.dart';
 import '../security/security_setup_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({required this.securityService, super.key});
+  const SettingsScreen({
+    required this.securityService,
+    required this.pinnedModeActive,
+    super.key,
+  });
 
   final SecurityService securityService;
+  final bool pinnedModeActive;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -102,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actionLabel: _hasPin
               ? AppStrings.changeExitPin
               : AppStrings.setExitPin,
-          onPressed: _configureExitPin,
+          onPressed: widget.pinnedModeActive ? _configureExitPin : null,
         ),
         const SizedBox(height: 14),
         _SettingsCard(
@@ -120,15 +125,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             border: Border.all(color: AppColors.cyan.withValues(alpha: .25)),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Row(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, color: AppColors.cyan),
-              SizedBox(width: 12),
+              const Icon(Icons.info_outline, color: AppColors.cyan),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  AppStrings.pinRequiredForActivation,
-                  style: TextStyle(color: AppColors.onSurfaceVariant),
+                  widget.pinnedModeActive
+                      ? AppStrings.exitPinProtectsSession
+                      : AppStrings.activateToManagePin,
+                  style: const TextStyle(color: AppColors.onSurfaceVariant),
                 ),
               ),
             ],
@@ -205,36 +212,36 @@ class _SettingsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: (statusActive ? AppColors.cyan : AppColors.outline)
-                      .withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    color: statusActive
-                        ? AppColors.cyan
-                        : AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: (statusActive ? AppColors.cyan : AppColors.outline)
+                    .withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                status,
+                style: TextStyle(
+                  color: statusActive
+                      ? AppColors.cyan
+                      : AppColors.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
-              if (actionLabel != null)
-                FilledButton.tonal(
-                  onPressed: onPressed,
-                  child: Text(actionLabel!),
-                ),
-            ],
+            ),
           ),
+          if (actionLabel != null) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonal(
+                onPressed: onPressed,
+                child: Text(actionLabel!),
+              ),
+            ),
+          ],
         ],
       ),
     );

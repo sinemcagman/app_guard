@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../localization/app_strings.dart';
@@ -29,6 +32,7 @@ class InstalledApp {
     required this.category,
     required this.icon,
     required this.iconColor,
+    this.iconBytes,
   });
 
   final String name;
@@ -36,15 +40,20 @@ class InstalledApp {
   final AppCategory category;
   final IconData icon;
   final Color iconColor;
+  final Uint8List? iconBytes;
 
   factory InstalledApp.fromPlatform(Map<Object?, Object?> data) {
     final category = AppCategory.fromPlatform(data['category'] as String?);
+    final encodedIcon = data['icon'] as String?;
     return InstalledApp(
       name: data['name'] as String? ?? AppStrings.other,
       packageName: data['packageName'] as String? ?? '',
       category: category,
       icon: iconFor(category),
       iconColor: colorFor(category),
+      iconBytes: encodedIcon == null || encodedIcon.isEmpty
+          ? null
+          : base64Decode(encodedIcon),
     );
   }
 

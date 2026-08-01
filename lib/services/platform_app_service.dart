@@ -8,7 +8,14 @@ import 'app_failure.dart';
 
 enum PlatformEvent { unauthorizedExit }
 
-class PlatformAppService {
+abstract interface class PlatformAppGateway {
+  Future<List<InstalledApp>> getLaunchableApps();
+  Future<void> startPinnedMode();
+  Future<void> launchApp(String packageName);
+  Future<void> stopPinnedMode();
+}
+
+class PlatformAppService implements PlatformAppGateway {
   PlatformAppService._() {
     _channel.setMethodCallHandler(_handleNativeCall);
   }
@@ -25,6 +32,7 @@ class PlatformAppService {
     }
   }
 
+  @override
   Future<List<InstalledApp>> getLaunchableApps() async {
     if (!Platform.isAndroid) return demoApplications;
     try {
@@ -38,6 +46,7 @@ class PlatformAppService {
     }
   }
 
+  @override
   Future<void> startPinnedMode() async {
     if (!Platform.isAndroid) {
       throw AppFailure.fromCode('UNSUPPORTED_PLATFORM');
@@ -49,6 +58,7 @@ class PlatformAppService {
     }
   }
 
+  @override
   Future<void> launchApp(String packageName) async {
     if (!Platform.isAndroid) {
       throw AppFailure.fromCode('UNSUPPORTED_PLATFORM');
@@ -62,6 +72,7 @@ class PlatformAppService {
     }
   }
 
+  @override
   Future<void> stopPinnedMode() async {
     if (!Platform.isAndroid) return;
     try {
