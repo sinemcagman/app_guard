@@ -7,6 +7,7 @@ import '../../services/platform_app_service.dart';
 import '../../services/security_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/app_guard_logo.dart';
+import '../lock/lock_screen.dart';
 import '../security/security_setup_sheet.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -82,8 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _togglePinnedMode() async {
     if (_pinnedMode) {
-      await widget.platformService.stopPinnedMode();
-      if (mounted) setState(() => _pinnedMode = false);
+      await _requestStopPinnedMode();
       return;
     }
     if (_selectedPackages.isEmpty) {
@@ -109,6 +109,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } on AppFailure catch (failure) {
       if (mounted) _showMessage(failure.message);
     }
+  }
+
+  Future<void> _requestStopPinnedMode() async {
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: AppColors.surface,
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, _, _) => LockScreen(
+        securityService: widget.securityService,
+        onUnlocked: () async {
+          await widget.platformService.stopPinnedMode();
+          if (mounted) {
+            setState(() => _pinnedMode = false);
+          }
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _openApp(InstalledApp application) async {

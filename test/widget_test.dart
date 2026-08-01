@@ -1,5 +1,8 @@
 import 'package:app_guard/app.dart';
+import 'package:app_guard/features/lock/lock_screen.dart';
 import 'package:app_guard/localization/app_strings.dart';
+import 'package:app_guard/services/security_service.dart';
+import 'package:app_guard/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -70,5 +73,39 @@ void main() {
     expect(find.text(AppStrings.setSecurityMethod), findsOneWidget);
     expect(find.text(AppStrings.enableBiometricUnlock), findsOneWidget);
     expect(find.text(AppStrings.cancelAndReturn), findsOneWidget);
+  });
+
+  test('Ana PIN düz metin tutulmaz ve doğru PIN doğrulanır', () async {
+    final securityService = SecurityService();
+    await securityService.savePin('1234', enableBiometrics: false);
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('master_pin_hash'), isNot('1234'));
+    expect(await securityService.verifyPin('1234'), isTrue);
+    expect(await securityService.verifyPin('4321'), isFalse);
+  });
+
+  testWidgets('kilit ekranı doğru Ana PIN ile açılır', (tester) async {
+    final securityService = SecurityService();
+    await securityService.savePin('1234', enableBiometrics: false);
+    var unlocked = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: LockScreen(
+          securityService: securityService,
+          onUnlocked: () async => unlocked = true,
+        ),
+      ),
+    );
+
+    for (final digit in ['1', '2', '3', '4']) {
+      await tester.tap(find.text(digit));
+      await tester.pump();
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(unlocked, isTrue);
   });
 }

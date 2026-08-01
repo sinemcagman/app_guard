@@ -35,6 +35,9 @@ class SecurityService {
 
   Future<bool> authenticateWithBiometrics() async {
     try {
+      if (!await biometricsEnabled()) {
+        throw const AppFailure(AppStrings.biometricDisabled);
+      }
       if (!await _localAuthentication.canCheckBiometrics ||
           !await _localAuthentication.isDeviceSupported()) {
         throw const AppFailure(AppStrings.biometricUnavailable);

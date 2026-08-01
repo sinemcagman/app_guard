@@ -53,6 +53,8 @@ abstract final class AppStrings {
       'Aramanızla eşleşen bir uygulama bulunamadı';
   static const loadingApplications = 'Uygulamalar yükleniyor';
   static const biometricUnavailable = 'Biyometrik doğrulama kullanılamıyor';
+  static const biometricDisabled =
+      'Biyometrik kilit açma bu oturum için etkin değil.';
   static const noBiometricCredential =
       'Cihazda kayıtlı parmak izi veya yüz verisi bulunmuyor';
   static const biometricReason =
